@@ -1,0 +1,15 @@
+const express = require("express");
+const router = express.Router();
+const axios = require("axios");
+
+router.get('/', async (req, res) => {
+        try {
+            res.json({success: "trufaee"});
+        } catch (err) {
+            res.status(500).json({error: err.message});
+        }
+    }
+)
+
+
+module.exports = router;
