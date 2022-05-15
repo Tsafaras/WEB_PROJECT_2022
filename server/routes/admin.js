@@ -1,19 +1,18 @@
 const router = require('express').Router();
-const mongo = require('../mongo/mongo');
+const mongo = require('../mongo/mongoBot');
 
-router.delete('/dropPOIs', async (req, res) => {
-    await mongo.purge('POIs');
-    console.log('Dropped collection POIs collection.');
-    res.status(200).send({status: "ok", data: `Purged.`});
-})
-
-router.post('/upload', async (req, res) => {
-    await mongo.POIs.addPOI(req.body);
-    res.status(200).send({status: "ok", data: `Added.`});
-})
-
-router.get('/data', async (req, res) => {
-
-})
+router.route('/data')
+    .post(async (req, res) => {
+        // await mongo.POIs.addPOI(req.body);
+        res.status(200).send({status: "ok", data: `Added.`});
+    })
+    .delete(async (req, res) => {
+        await mongo.purge();
+        console.log('Dropped collection POIs collection.');
+        res.status(200).send({status: "ok", data: `Purged.`});
+    })
+    .get(async (req, res) => {
+    //    TODO Definition
+    })
 
 module.exports = router;

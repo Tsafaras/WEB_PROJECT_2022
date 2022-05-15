@@ -11,24 +11,20 @@ const app = express();
 // enable cors
 app.use(cors());
 
+// for parsing JSON requests
+app.use(express.json());
+
 // routes
 // path of use case - require ( relevant file )
 app.use('/api/search', searchResults);
-
-// app.get('/api/search', (req, res) => {
-//     res.json({success: "true"});
-// })
-
-// Handle Production
-// if (process.env.NODE_ENV === "production") {
-//     app.use(express.static(`${__dirname}/public`));
-// }
+app.use('/api/admin', require('./routes/admin'));
+app.use('/api/cred', require('./routes/credentials'));
 
 app.listen(PORT, () =>
     console.log(`Back-end server running. Visit http://localhost:${PORT}`));
 
 // Database stuff
-const mongo = require('./mongo/mongo');
+const mongo = require('./mongo/mongoBot');
 
 async function setupDB() { await mongo.init();}
 setupDB().then(r => {});
