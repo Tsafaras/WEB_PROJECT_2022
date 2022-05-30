@@ -12,9 +12,12 @@
     "@tailwindcss/forms": "^0.5.1",
     "@vuelidate/core": "^2.0.0-alpha.41",
     "@vuelidate/validators": "^2.0.0-alpha.29",
+    "@vuepic/vue-datepicker": "^3.2.1",
     "axios": "^0.27.2",
     "bcryptjs": "^2.4.3",
+    "dayjs": "^1.11.2",
     "leaflet": "^1.8.0",
+    "mitt": "^3.0.0",
     "vue": "^3.2.33",
     "vue-router": "^4.0.14"
   },
