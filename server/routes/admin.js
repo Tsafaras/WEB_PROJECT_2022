@@ -1,18 +1,27 @@
 const router = require('express').Router();
-const mongo = require('../mongo/mongoBot');
+const {purge, connectOff, connectOn, upload} = require('../mongo/mongoBot');
+const multer = require('multer');
+const fs = require("fs");
+const buffer = require("buffer");
+const uploadDest = multer({storage: multer.memoryStorage()});
 
 router.route('/data')
-    .post(async (req, res) => {
-        // await mongo.POIs.addPOI(req.body);
-        res.status(200).send({status: "ok", data: `Added.`});
+    .post(uploadDest.single('file'), async (req, res) => {
+        try {
+            const file = JSON.parse(req.file.buffer.toString('utf-8'));
+            await connectOn();
+            await upload(file);
+            await connectOff();
+            res.status(200).send({uploaded: true});
+        } catch (err) {
+                return res.status(200).send({wrong_schema: true});
+        }
     })
     .delete(async (req, res) => {
-        await mongo.purge();
-        console.log('Dropped collection POIs collection.');
-        res.status(200).send({status: "ok", data: `Purged.`});
-    })
-    .get(async (req, res) => {
-    //    TODO Definition
+        await connectOn();
+        await purge();
+        await connectOff();
+        res.status(200).send({purged: true});
     })
 
 module.exports = router;

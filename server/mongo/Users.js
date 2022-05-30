@@ -7,11 +7,9 @@ const bcrypt = require('bcryptjs');
  * @param {Object} doc
  */
 const signup = async (collection, doc) => {
-    if (await collection.findOne({username: doc.username}))
-        return 'username';
+    if (await collection.findOne({username: doc.username})) return 'username';
 
-    if (await collection.findOne({email: doc.email}))
-        return 'email';
+    if (await collection.findOne({email: doc.email})) return 'email';
 
     await collection.insertOne(doc);
     return true;
@@ -26,8 +24,7 @@ const signup = async (collection, doc) => {
  */
 const login = async (collection, doc) => {
     const result = await collection.findOne({username: doc.username});
-    if ( result === null)
-        return false;
+    if (result === null) return false;
 
     return checkHash(doc.password, result.password);
 };
@@ -51,9 +48,14 @@ const schema = {
     }
 };
 
-const index = {
-    username: 1,
+const index = [[{
+    username: 1
+}, {
+    unique: true, name: "UniqueUsername"
+},], [{
     email: 1
-}
+}, {
+    unique: true, name: "UniqueEmail"
+},]]
 
 module.exports = {schema, signup, login, index};

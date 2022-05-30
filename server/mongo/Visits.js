@@ -17,7 +17,7 @@ const schema = {
                 bsonType: 'timestamp'},
             estimation: {
                 bsonType: 'number'}
-        }, required: ['poi', 'username', 'timestamp', 'estimation']
+        }, required: ['poi', 'username', 'timestamp']
     }
 };
 

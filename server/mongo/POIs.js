@@ -1,36 +1,37 @@
-async function add_POI(docs) {
+async function add_POI(collection, docs) {
     if (Array.isArray(docs)) {
         let bulkOpArray = [];
 
         for (let doc of docs) {
             let singleOperation = {
                 replaceOne: {
-                    filter: {id: doc.id},
-                    replacement: doc,
-                    upsert: true
+                    filter: {id: doc.id}, replacement: doc, upsert: true
                 }
             }
             bulkOpArray.push(singleOperation);
         }
 
-        await this.collection.bulkWrite(bulkOpArray).catch(err => {
-            console.log(err.result);
-        });
-    } else
-        await upsert_onePOI(docs);
+        await collection.bulkWrite(bulkOpArray, {ordered: false})
+            .catch(err => {
+                console.log(err.result);
+            });
+    } else await upsert_onePOI(docs);
 
 }
 
 /** Upserts one document */
-async function upsert_onePOI(doc) {
-    await this.collection.findOneAndReplace({id: doc.id}, doc, {
+async function upsert_onePOI(collection, doc) {
+    await collection.findOneAndReplace({id: doc.id}, doc, {
         upsert: true
     }).catch(err => {
         console.log(err.result);
         console.log("\nSchema validation failed. Doc skipped.");
-        console.log("Details: " +
-            JSON.stringify(err.errInfo.details.schemaRulesNotSatisfied[0].propertiesNotSatisfied, null, 1));
+        console.log("Details: " + JSON.stringify(err.errInfo.details.schemaRulesNotSatisfied[0].propertiesNotSatisfied, null, 1));
     })
+}
+
+const searchPOI = (collection, query) => {
+    return collection.find({$text: {$search: query}});
 }
 
 /** The schema used for the collection's validation */
@@ -90,4 +91,17 @@ const schema = {
     }
 };
 
-module.exports = {schema};
+const index = [[{
+    id: 1
+}, {
+    unique: true, name: "UniquePOI_Index"
+},], [{
+    name: 'text', address: 'text', types: 'text'
+}, {
+    weights: {
+        name: 10, types: 5,
+    }, name: 'WeightedSearchIndex'
+}]]
+
+
+module.exports = {schema, index, add_POI};
