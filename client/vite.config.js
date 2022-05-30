@@ -1,5 +1,5 @@
 import { fileURLToPath, URL } from 'url'
-
+import http from 'https'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
@@ -13,7 +13,9 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/api': 'http://localhost:9000'
+      '/api': 'http://localhost:9000',
+      secure: false,
+      agent: new http.Agent(),
     }
   }
 })

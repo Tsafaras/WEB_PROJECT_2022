@@ -15,7 +15,6 @@ app.use(cors());
 app.use(express.json());
 
 // routes
-// path of use case - require ( relevant file )
 app.use('/api/search', searchResults);
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/cred', require('./routes/credentials'));

@@ -1,8 +1,7 @@
 <template>
   <div class="min-h-full flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-    <Popup v-if="popUp" :header="popUpHeader"
-           :text="popUpText" @closeMe="showPopUp(null)"/>
     <div class="max-w-md w-full space-y-8">
+<!--      TODO Turn form input into component -->
       <div>
         <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900" v-text="header"></h2>
         <p class="mt-2 text-center text-sm text-gray-600">
@@ -15,7 +14,6 @@
         <input name="remember" type="hidden" value="true"/>
         <div class="rounded-md shadow-sm -space-y-px">
           <div>
-            <label class="sr-only" for="username">Username</label>
             <input id="username" v-model="username" autocomplete="username"
                    class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                    name="username" placeholder="Username"
@@ -23,7 +21,6 @@
                    type="text"/>
           </div>
           <div v-if="!existing">
-            <label class="sr-only" for="email-address">Email address</label>
             <input id="email-address" v-model="email" autocomplete="email"
                    class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                    name="email" placeholder="Email address"
@@ -31,7 +28,6 @@
                    type="email"/>
           </div>
           <div>
-            <label class="sr-only" for="password">Password</label>
             <input id="password" v-model="password" autocomplete="current-password"
                    class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                    name="password"
@@ -43,19 +39,14 @@
             {{ error.$message }}
           </p>
         </div>
-        <!--        <div class="relative w-40 bg-indigo-500 rounded-xl flex justify-center items-center text-white text-xl">-->
-        <!--          Only element. Another <br> And another <br> one more-->
-        <!--          <div class="absolute w-0 h-0 border-t-[15px] border-t-transparent border-b-[13px] border-b-transparent border-r-8 border-r-indigo-500 right-[100%] top-[50%] translate-y-[-50%]"></div>-->
-        <!--        </div>-->
         <!--        TODO When a password is entered, show requirements-->
         <div>
-          <button v-if="existing " :disabled="username === '' || password === ''"
-                  class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500
-                         disabled:cursor-not-allowed disabled:bg-indigo-400" type="button" @click="login">
-            <span class="absolute left-0 inset-y-0 flex items-center pl-3">
-            </span>
-            Sign in
-          </button>
+          <RouterLink v-if="existing" to="/">
+            <input :disabled="username === '' || password === ''"
+                    class="w-full py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500
+                         disabled:cursor-not-allowed disabled:bg-indigo-400 hover:cursor-pointer"
+                   type="submit" @click="login" value="Sign in">
+          </RouterLink>
           <button v-else :disabled="username === '' || password === '' || email === ''"
                   class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500
                          disabled:cursor-not-allowed disabled:bg-indigo-400" type="button"  @click="signup">
@@ -70,8 +61,6 @@
 </template>
 
 <script>
-import {ref} from "vue";
-import Popup from '../components/Popup.vue'
 import axios from "axios";
 import bcrypt from 'bcryptjs';
 import useVuelidate from '@vuelidate/core'
@@ -99,9 +88,6 @@ export default {
       existing: true,
       header: original_header,
       subtext: original_action,
-      popUp: ref(false),
-      popUpHeader: ref(null),
-      popUpText: ref(null),
       has_uppercase: false,
       has_number: false,
       has_special: false,
@@ -123,8 +109,11 @@ export default {
         }
       }).then((response) => {
         if (!response.data.success) {
-          this.showPopUp(true, "Oops!",
-              "Wrong usernmame/password combination. Try again.");
+          this.emitter.emit('show',
+              {
+                header: "Oops!",
+                text: "Wrong usernmame/password combination. Try again.",
+              });
         } else if (response.data.success === 'admin') {
           this.$emit('auth', {privilege: true, username: this.username})
         } else {
@@ -151,8 +140,11 @@ export default {
         }
       }).then((response) => {
         if (!response.data.success) {
-          this.showPopUp(true, "Oops!",
-              `This ${response.data.duplicate} is already in use. Try another one.`);
+          this.emitter.emit('show',
+              {
+                header: "Oops!",
+                text: `This ${response.data.duplicate} is already in use. Try another one.`,
+              });
         } else {
           console.log('Created successfully! ' + this.username);
           this.$emit('auth', {privilege: false, username: this.username})
@@ -168,11 +160,6 @@ export default {
       this.has_special = /[!@#$%^&*)(+=._-]/.test(this.password);
       this.pass = this.password.length > 7 && this.has_number && this.has_uppercase && this.has_special;
     },
-    showPopUp(state, header = null, text = null) {
-      this.popUp = state;
-      this.popUpHeader = header;
-      this.popUpText = text;
-    },
     /**
      * Synchronous hashing function. Use case is for password only.
      * @param {String} to_hash what to hash.
@@ -183,8 +170,5 @@ export default {
       return bcrypt.hashSync(to_hash, salt);
     }
   },
-  components: {
-    Popup,
-  }
 }
 </script>
