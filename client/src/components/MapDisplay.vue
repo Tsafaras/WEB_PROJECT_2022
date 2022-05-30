@@ -23,7 +23,7 @@
 import leaflet from "leaflet";
 import { onMounted, ref } from "vue";
 export default {
-  name: "MapDisplay",
+  name: "UserView",
   setup() {
     console.log("started");
     console.log(import.meta.env.VITE_MAPBOX);

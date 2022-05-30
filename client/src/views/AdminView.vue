@@ -1,75 +1,120 @@
 <template>
-  <div class="shadow sm:rounded-md sm:overflow-hidden">
-    <div class="px-4 py-5 bg-white space-y-6 sm:p-6 grid sm:grid-cols-2">
-      <div class="grid justify-around w-full gap-2 sm:border-r sm:border-b-0 sm:pb-0 border-b pb-4 border-gray-200">
-        <label class="block text-sm font-medium text-gray-700"> Upload more data </label>
-        <div class="flex justify-center px-5 pt-2 pb-3 border-2 border-gray-300 border-dashed rounded-md">
-          <div class="space-y-1 text-center grid justify-items-center">
+  <PageContent>
+    <Container subtitle="Any existing POIs will be overwritten!" title="Upload data (POIs)">
+      <div class="flex justify-center px-5 pt-2 pb-3 border-2 border-gray-300 border-dashed rounded-md">
+        <div class="space-y-1 text-center grid justify-items-center">
+          <form enctype="multipart/form-data">
             <div class="text-sm text-gray-600">
               <label class="cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500
               focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500
               grid justify-items-center"
                      for="file-upload">
                 <FolderAddIcon class="h-12 w12"/>
-                Select a file or drag and drop
-                <input id="file-upload" class="sr-only" type="file"/>
+                Select a file <!-- TODO Add drag and drop -->
+                <input id="file-upload" ref="file" accept=".json" class="sr-only" type="file" @change="checkFile"/>
               </label>
             </div>
             <p class="text-xs text-gray-500">JSON format only</p>
-          </div>
-        </div>
-        <div class="text-center sm:px-6">
-          <button
-              class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              type="submit">
-            Upload
-          </button>
+          </form>
         </div>
       </div>
+      <ActionButton text="Upload" @click="upload"/>
+    </Container>
 
-      <!--      <div aria-hidden="true" class="hidden sm:block">-->
-      <!--        <div class="py-5">-->
-      <!--          <div class="sm:border-t sm:border-gray-200"/>-->
-      <!--        </div>-->
-      <!--      </div>-->
+    <Container subtitle="This cannot be undone!"
+               title="Delete all data (except users)">
+      <ActionButton text="Purge" @click="purge"/>
+    </Container>
 
-      <div class="flex flex-col justify-center items-center gap-2">
-        <label class="block text-sm font-medium text-gray-700"> Delete all data </label>
-        <button
-            class="py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700
-            focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            type="submit">
-          Purge
-        </button>
-        <p class="italic text-sm text-gray-600">This cannot be undone!</p>
-      </div>
-
-      <div class="grid gap-2">
-        <div>Generate users</div>
-        <form>
-          <input
-              class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900
-              rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-              placeholder="Amount of users" type="number"/>
-        </form>
-        <button
-            class="py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700
-            focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            type="submit">
-          Generate
-        </button>
-      </div>
-    </div>
-  </div>
+    <Container title="Generate data">
+      <input
+          class="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900
+              rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+          placeholder="Amount of users" type="number"/>
+      <Datepicker v-model="pickedRange" :enableTimePicker="false" :format="'yyyy/MM/dd'" :maxDate="today" :minDate="firstCOVIDCase"
+                  :placeholder="'Date range, from - to'" :range="true" class="w-64">
+      </Datepicker>
+      <ActionButton text="Generate" @click="generate"/>
+    </Container>
+  </PageContent>
 </template>
 
 <script>
 import {FolderAddIcon} from '@heroicons/vue/outline';
+import axios from "axios";
 
 export default {
   name: "AdminView",
+  beforeMount() {
+    this.emitter.on('accept', (evt) => {
+      this.conf_purge();
+    })
+  },
+  data() {
+    // TODO Date must be range (Array[2])
+    return {
+      file: '',
+      pickedRange: null,
+      today: new Date(),
+      firstCOVIDCase: Date.parse(import.meta.env.VITE_FIRST_COVID_CASE)
+    }
+  },
   components: {
     FolderAddIcon
   },
+  methods: {
+    checkFile() {
+      let file = document.getElementById("file-upload").files[0];
+      if (file.type !== "application/json") {
+        this.emitter.emit('show', {
+          header: "Wrong file type",
+          text: `The file you selected is of type ${file.type}. We need JSON.`,
+          btn_txt: "Let me try that again."
+        })
+        return;
+      }
+      this.file = this.$refs.file.files[0];
+    },
+    async upload() {
+      let form = new FormData();
+      form.append('file', this.file);
+
+      await axios.post('api/admin/data', form).then((response) => {
+        if (response.data.uploaded) {
+          this.emitter.emit('show', {
+            header: "Hooray!",
+            text: "Files uploaded successfully.",
+          })
+          return;
+        }
+        this.emitter.emit('show', {
+          header: "Oh-oh!",
+          text: "This files doesn't seem to contain a valid json object"
+        })
+      })
+    },
+    purge() {
+      this.emitter.emit('show',
+          {
+            header: "Are you sure?",
+            text: "This cannot be undone. I cannot stress this enough.",
+            btn_txt: "Oh, I'm sure.",
+            secondary: true
+          });
+    },
+    async conf_purge() {
+      this.accept = false;
+      await axios.delete('api/admin/data').then((response) => {
+        this.emitter.emit('show', {
+          header: "Success? 🤷‍♂️",
+          text: "All data was removed.",
+          btn_txt: "That's what I wanted 🤨"
+        })
+      });
+    },
+    generate() {
+
+    }
+  }
 }
 </script>
