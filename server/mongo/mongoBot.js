@@ -1,9 +1,11 @@
 const {MongoClient} = require('mongodb');
+const sha256 = require('js-sha256').sha256;
 
 const Cases = require('./Cases')
 const POIs = require('./POIs')
 const Users = require('./Users')
 const Visits = require('./Visits')
+const bcrypt = require("bcryptjs");
 
 const coll_names = {
     Cases: {
@@ -60,7 +62,7 @@ class MongoBot {
     };
 
     upload = async (body) => {
-        await POIs.add_POI(this.db.collection('POIs'), body);
+        await POIs.add_POI( body);
     }
 
     /**
@@ -68,8 +70,10 @@ class MongoBot {
      * Works only for the POIs collection, as it is the only use-case of a 'drop'.
      */
     purge = async () => {
-        let collToPurge = [{name: 'POIs', schema: POIs.schema},
-            {name: 'Visits', schema: Visits.schema}, {name: 'Cases', schema: Cases.schema}
+        let collToPurge = [
+            {name: 'POIs', schema: POIs.schema},
+            {name: 'Visits', schema: Visits.schema},
+            {name: 'Cases', schema: Cases.schema}
         ];
 
         for (const element of collToPurge) {
@@ -78,14 +82,16 @@ class MongoBot {
                 validator: element.schema
             })
         }
-        // for (const collToPurgeKey in collToPurge) {
-        //     console.log(collToPurge);
-        //     await this.db.dropCollection(collToPurgeKey.name)
-        //     await this.db.createCollection(collToPurgeKey.name, {
-        //         validator: collToPurgeKey.schema
-        //     })
-        // }
     };
+
+    /**
+     * Returns a specific collection.
+     * @param coll_name {string} - The collection we want
+     * @returns a MongoDB Collection
+     */
+    getCollection = (coll_name) => {
+        return this.db.collection(coll_name);
+    }
 
     /**
      * Checks if a collection exists
@@ -101,11 +107,7 @@ class MongoBot {
      * @returns {Promise<boolean>}
      */
     login = async (username, password) => {
-        const query = {
-            username: username,
-            password: password
-        };
-        return await Users.login(this.db.collection('Users'), query);
+        return checkHash(password, await Users.login(username));
     };
 
     signup = async (username, password, email) => {
@@ -114,8 +116,43 @@ class MongoBot {
             password: password,
             email: email
         };
-        return await Users.signup(this.db.collection('Users'), query);
+        return await Users.signup(query);
     }
+
+    generate = async (num_of_users, date_start, date_end) => {
+        let docs = [];
+        let usersHashed = []
+        const num_of_days = (date_end - date_start) / process.env.MILISEC_IN_A_DAY + 1;
+
+        for (let i = 1; i <= num_of_users; i++) {
+            let username = 'user' + i;
+            usersHashed.push(sha256(username));
+            let email = username + '@user.com';
+            let password = hashIt(email.charAt(0).toUpperCase() + email.slice(1));
+            docs.push({
+                username: username,
+                password: password,
+                email: email,
+            })
+        }
+        const usersDocs = await Users.generate(docs);
+        const casesDocs = await Cases.generate(usersHashed, date_start, num_of_days);
+        // await Visits.generate(usersHashed, date_start, num_of_days);
+    }
+}
+
+/**
+ * Synchronous hashing function. Use case is for password only.
+ * @param {String} to_hash what to hash.
+ * @returns {String} the hashed result
+ */
+const hashIt = (to_hash) => {
+    let salt = bcrypt.genSaltSync(10);
+    return bcrypt.hashSync(to_hash, salt);
+}
+
+const checkHash = (given, existing) => {
+    return bcrypt.compareSync(given, existing);
 }
 
 module.exports = new MongoBot();

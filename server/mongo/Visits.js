@@ -1,7 +1,32 @@
 // functions and schema for collection 'Visits'
+const {getRandomDayInRange, getCollection} = require("./helpers");
 
-async function add_visit(doc) {
+const add_visit = async (docs) => {
+    const collection = getCollection(process.env.COLL_VISITS);
 //    TODO - Add definition
+    }
+
+const generate_visits = async (user) => {
+    const collection = getCollection(process.env.COLL_VISITS);
+
+}
+
+/**
+ *
+ * @param users {String[]}
+ * @param date_start {Date}
+ * @param num_of_days {number} - The number of days in the date range.
+ * @returns {Promise<number>}
+ */
+const generate = async (users, date_start, num_of_days) => {
+    const collection =  getCollection(process.env.COLL_VISITS);
+    let bulkOpArray = [];
+
+    const result = await collection.bulkWrite(bulkOpArray, {ordered: false})
+        .catch(err => {
+            console.log(err.result);
+        });
+    return result.nUpserted;
 }
 
 /** The schema used for the collection's validation */
@@ -14,11 +39,11 @@ const schema = {
             username: {
                 bsonType: 'string'},
             timestamp: {
-                bsonType: 'timestamp'},
+                bsonType: 'date'},
             estimation: {
                 bsonType: 'number'}
         }, required: ['poi', 'username', 'timestamp']
     }
 };
 
-module.exports = {schema};
+module.exports = {schema, generate};

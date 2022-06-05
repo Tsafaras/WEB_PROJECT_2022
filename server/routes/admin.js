@@ -1,8 +1,6 @@
 const router = require('express').Router();
-const {purge, connectOff, connectOn, upload} = require('../mongo/mongoBot');
+const {purge, connectOff, connectOn, upload, generate} = require('../mongo/mongoBot');
 const multer = require('multer');
-const fs = require("fs");
-const buffer = require("buffer");
 const uploadDest = multer({storage: multer.memoryStorage()});
 
 router.route('/data')
@@ -23,5 +21,12 @@ router.route('/data')
         await connectOff();
         res.status(200).send({purged: true});
     })
+
+router.route('/generate').post(async (req, res) => {
+    await connectOn();
+    await generate(req.body.num_of_users, req.body.date_start, req.body.date_end);
+    await connectOff();
+    res.status(200).send({generated: true})
+})
 
 module.exports = router;

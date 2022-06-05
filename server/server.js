@@ -18,12 +18,13 @@ app.use(express.json());
 app.use('/api/search', searchResults);
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/cred', require('./routes/credentials'));
+app.use('/api/user', require('./routes/user'));
 
 app.listen(PORT, () =>
     console.log(`Back-end server running. Visit http://localhost:${PORT}`));
 
 // Database stuff
-const mongo = require('./mongo/mongoBot');
+const mongo = require('./mongo/mongoBot').init;
 
-async function setupDB() { await mongo.init();}
+async function setupDB() { await mongo();}
 setupDB().then(r => {});

@@ -1,4 +1,7 @@
-async function add_POI(collection, docs) {
+const {getCollection} = require("./helpers");
+
+async function add_POI(docs) {
+    const collection = getCollection(process.env.COLL_POIS);
     if (Array.isArray(docs)) {
         let bulkOpArray = [];
 
@@ -15,7 +18,7 @@ async function add_POI(collection, docs) {
             .catch(err => {
                 console.log(err.result);
             });
-    } else await upsert_onePOI(docs);
+    } else await upsert_onePOI(collection, docs);
 
 }
 

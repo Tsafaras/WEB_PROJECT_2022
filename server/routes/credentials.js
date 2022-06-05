@@ -1,10 +1,12 @@
 const router = require('express').Router();
 const {login, signup, connectOn, connectOff} = require('../mongo/mongoBot');
+const {changeCred} = require("../mongo/Users");
 
 router.route('/login').post(async (req, res) => {
     try {
         await connectOn();
         let password = req.body.params.password;
+        // TODO remove params
         let username = req.body.params.username;
         let match = await login(username, password) ? username : false ;
         await connectOff();
@@ -18,6 +20,7 @@ router.route('/signup').post(async (req, res) => {
     try {
         await connectOn();
         let password = req.body.params.password;
+        // TODO remove params
         let username = req.body.params.username;
         let email = req.body.params.email;
         let newUser = await signup(username, password, email);
@@ -35,6 +38,13 @@ router.route('/signup').post(async (req, res) => {
         }
         res.status(500).json({error: err.message});
     }
+})
+
+router.route('/change').post(async (req, res) => {
+    await connectOn();
+    const result = await changeCred(req.body.username, req.body.field, req.body.value);
+    await connectOff();
+    return res.status(200).send({result: true});
 })
 
 module.exports = router;
