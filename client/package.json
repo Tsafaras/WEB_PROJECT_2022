@@ -15,10 +15,12 @@
     "@vuepic/vue-datepicker": "^3.2.1",
     "axios": "^0.27.2",
     "bcryptjs": "^2.4.3",
+    "chart.js": "^3.8.0",
     "dayjs": "^1.11.2",
     "leaflet": "^1.8.0",
     "mitt": "^3.0.0",
     "vue": "^3.2.33",
+    "vue-chartjs": "^4.1.1",
     "vue-router": "^4.0.14"
   },
   "devDependencies": {

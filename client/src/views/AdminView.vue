@@ -27,12 +27,12 @@
     </Container>
 
     <Container title="Generate data">
-      <input
-          class="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900
+      <input v-model="num_of_users"
+             class="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900
               rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-          placeholder="Amount of users" type="number"/>
-      <Datepicker v-model="pickedRange" :enableTimePicker="false" :format="'yyyy/MM/dd'" :maxDate="today" :minDate="firstCOVIDCase"
-                  :placeholder="'Date range, from - to'" :range="true" class="w-64">
+             placeholder="Amount of users" type="number"/>
+      <Datepicker v-model="pickedRange" :enableTimePicker="false" :format="'yyyy/MM/dd'" :maxDate="today"
+                  :minDate="firstCOVIDCase" :placeholder="'Date range, from - to'" :range="true" class="w-64">
       </Datepicker>
       <ActionButton text="Generate" @click="generate"/>
     </Container>
@@ -55,8 +55,9 @@ export default {
     return {
       file: '',
       pickedRange: null,
+      num_of_users: null,
       today: new Date(),
-      firstCOVIDCase: Date.parse(import.meta.env.VITE_FIRST_COVID_CASE)
+      firstCOVIDCase: new Date(import.meta.env.VITE_FIRST_COVID_CASE)
     }
   },
   components: {
@@ -65,14 +66,13 @@ export default {
   methods: {
     checkFile() {
       let file = document.getElementById("file-upload").files[0];
-      if (file.type !== "application/json") {
-        this.emitter.emit('show', {
+      if (file.type !== "application/json")
+        return this.emitter.emit('show', {
           header: "Wrong file type",
           text: `The file you selected is of type ${file.type}. We need JSON.`,
           btn_txt: "Let me try that again."
         })
-        return;
-      }
+
       this.file = this.$refs.file.files[0];
     },
     async upload() {
@@ -80,13 +80,12 @@ export default {
       form.append('file', this.file);
 
       await axios.post('api/admin/data', form).then((response) => {
-        if (response.data.uploaded) {
-          this.emitter.emit('show', {
+        if (response.data.uploaded)
+          return this.emitter.emit('show', {
             header: "Hooray!",
             text: "Files uploaded successfully.",
           })
-          return;
-        }
+
         this.emitter.emit('show', {
           header: "Oh-oh!",
           text: "This files doesn't seem to contain a valid json object"
@@ -112,8 +111,41 @@ export default {
         })
       });
     },
-    generate() {
+    async generate() {
+      if (!this.num_of_users)
+        return this.emitter.emit('show', {
+          header: "Enter a number first!",
+          text: "You must enter a valid number, 1 or greater.",
+        })
 
+      if (!this.pickedRange || !this.pickedRange[1])
+        return this.emitter.emit('show', {
+          header: "Pick a date range first!",
+          text: "You must pick a starting date AND an ending date.",
+        })
+
+      const params = {
+        num_of_users: this.num_of_users,
+        date_start: this.getUTCMiliSec(this.pickedRange[0]),
+        date_end: this.getUTCMiliSec(this.pickedRange[1]),
+      }
+      console.log(this.pickedRange[0], this.pickedRange[1]);
+      console.log(params);
+
+      await axios.post('api/admin/generate', params).then(() => {
+        this.emitter.emit('show', {
+          header: "Success!",
+          text: "Users, cases and visits were generated successfully!",
+        })
+      })
+    },
+    /**
+     *
+     * @param date {Date}
+     * @returns {number}
+     */
+    getUTCMiliSec(date) {
+      return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())).getTime()
     }
   }
 }

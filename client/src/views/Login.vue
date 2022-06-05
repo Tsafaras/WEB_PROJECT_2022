@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-full flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8">
-<!--      TODO Turn form input into component -->
+      <!--      TODO Turn form input into component -->
       <div>
         <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900" v-text="header"></h2>
         <p class="mt-2 text-center text-sm text-gray-600">
@@ -43,13 +43,13 @@
         <div>
           <RouterLink v-if="existing" to="/">
             <input :disabled="username === '' || password === ''"
-                    class="w-full py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500
+                   class="w-full py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500
                          disabled:cursor-not-allowed disabled:bg-indigo-400 hover:cursor-pointer"
-                   type="submit" @click="login" value="Sign in">
+                   type="submit" value="Sign in" @click="login">
           </RouterLink>
           <button v-else :disabled="username === '' || password === '' || email === ''"
                   class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500
-                         disabled:cursor-not-allowed disabled:bg-indigo-400" type="button"  @click="signup">
+                         disabled:cursor-not-allowed disabled:bg-indigo-400" type="button" @click="signup">
             <span class="absolute left-0 inset-y-0 flex items-center pl-3">
             </span>
             Sign up
@@ -62,9 +62,9 @@
 
 <script>
 import axios from "axios";
-import bcrypt from 'bcryptjs';
 import useVuelidate from '@vuelidate/core'
 import {email, helpers} from '@vuelidate/validators'
+import {hashIt, passwordCheck} from "../helpers";
 
 const original_header = "Sign in to your acount";
 const original_action = "sign-up";
@@ -135,40 +135,23 @@ export default {
       await axios.post('api/cred/signup', {
         params: {
           username: this.username,
-          password: this.hashIt(this.password),
+          password: hashIt(this.password),
           email: this.email
         }
       }).then((response) => {
-        if (!response.data.success) {
-          this.emitter.emit('show',
+        if (!response.data.success)
+          return this.emitter.emit('show',
               {
                 header: "Oops!",
                 text: `This ${response.data.duplicate} is already in use. Try another one.`,
               });
-        } else {
-          console.log('Created successfully! ' + this.username);
-          this.$emit('auth', {privilege: false, username: this.username})
-        }
-      })
-          .catch(function (error) {
-            console.log(error);
-          });
+
+        this.$emit('auth', {privilege: false, username: this.username})
+      }).catch(function (error) { console.log(error)});
     },
     passwordCheck() {
-      this.has_number = /\d/.test(this.password);
-      this.has_uppercase = /[A-Z]/.test(this.password);
-      this.has_special = /[!@#$%^&*)(+=._-]/.test(this.password);
-      this.pass = this.password.length > 7 && this.has_number && this.has_uppercase && this.has_special;
+      this.pass = passwordCheck(this.password);
     },
-    /**
-     * Synchronous hashing function. Use case is for password only.
-     * @param {String} to_hash what to hash.
-     * @returns {String} the hashed result
-     */
-    hashIt(to_hash) {
-      let salt = bcrypt.genSaltSync(10);
-      return bcrypt.hashSync(to_hash, salt);
-    }
   },
 }
 </script>
