@@ -9,6 +9,7 @@ import mitt from 'mitt';
 import PageContent from "./components/PageContent.vue";
 import Datepicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';
+import BarChart from './components/BarChart.vue'
 
 const app = createApp(App);
 
@@ -18,5 +19,6 @@ app.component('Popup', Popup)
     .component('Container', Container)
     .component('PageContent', PageContent)
     .component('Datepicker', Datepicker)
+    .component('BarChart', BarChart)
 
 app.use(router).mount("#app");
