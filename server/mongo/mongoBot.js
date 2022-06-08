@@ -5,7 +5,7 @@ const Cases = require('./Cases')
 const POIs = require('./POIs')
 const Users = require('./Users')
 const Visits = require('./Visits')
-const bcrypt = require("bcryptjs");
+const {skipTime, hashIt} = require("./helpers");
 
 const coll_names = {
     Cases: {
@@ -116,18 +116,10 @@ class MongoBot {
         }
         const usersDocs = await Users.generate(docs);
         const casesDocs = await Cases.generate(usersHashed, date_start, num_of_days);
+        let hours = skipTime(date_start);
+        console.log(hours);
         // await Visits.generate(usersHashed, date_start, num_of_days);
     }
-}
-
-/**
- * Synchronous hashing function. Use case is for password only.
- * @param {String} to_hash what to hash.
- * @returns {String} the hashed result
- */
-const hashIt = (to_hash) => {
-    let salt = bcrypt.genSaltSync(10);
-    return bcrypt.hashSync(to_hash, salt);
 }
 
 module.exports = new MongoBot();

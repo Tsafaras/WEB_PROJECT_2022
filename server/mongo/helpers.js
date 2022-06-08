@@ -1,4 +1,5 @@
 const {subDays, addDays, addMinutes} = require('date-fns');
+const bcrypt = require("bcryptjs");
 
 const getRandomIntInclusive = (max) => {
     return Math.floor(Math.random() * (max + 1));
@@ -34,4 +35,16 @@ const checkHash = (given, existing) => {
     return bcrypt.compareSync(given, existing);
 }
 
-module.exports = {getRandomIntInclusive, getRandomDayInRange, getCollection, excludeDays, skipTime, checkHash};
+/**
+ * Synchronous hashing function. Use case is for password only.
+ * @param {String} to_hash what to hash.
+ * @returns {String} the hashed result
+ */
+const hashIt = (to_hash) => {
+    let salt = bcrypt.genSaltSync(10);
+    return bcrypt.hashSync(to_hash, salt);
+}
+
+module.exports = {
+    getRandomIntInclusive, getRandomDayInRange, getCollection, excludeDays, skipTime, checkHash, hashIt
+};

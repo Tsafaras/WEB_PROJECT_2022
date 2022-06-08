@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const {purge, connectOff, connectOn, upload, generate} = require('../mongo/mongoBot');
+const {purge, connectOff, connectOn, generate} = require('../mongo/mongoBot');
 const multer = require('multer');
 const {add_POI} = require("../mongo/POIs");
 const uploadDest = multer({storage: multer.memoryStorage()});
