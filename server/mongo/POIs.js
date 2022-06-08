@@ -6,6 +6,7 @@ async function add_POI(docs) {
         let bulkOpArray = [];
 
         for (let doc of docs) {
+            doc.coordinates = JSON.parse(JSON.stringify(doc.coordinates, ['lng', 'lat']))
             let singleOperation = {
                 replaceOne: {
                     filter: {id: doc.id}, replacement: doc, upsert: true
@@ -24,6 +25,7 @@ async function add_POI(docs) {
 
 /** Upserts one document */
 async function upsert_onePOI(collection, doc) {
+    doc.coordinates = JSON.parse(JSON.stringify(doc.coordinates, ['lng', 'lat']))
     await collection.findOneAndReplace({id: doc.id}, doc, {
         upsert: true
     }).catch(err => {
@@ -36,6 +38,30 @@ async function upsert_onePOI(collection, doc) {
 const searchPOI = (query) => {
     const collection = getCollection(process.env.COLL_POIS);
     return collection.find({$text: {$search: query}});
+}
+
+const searchNear = (center, distance) => {
+    const collection = getCollection(process.env.COLL_POIS);
+    const filter = {
+        'coordinates': {
+            '$geoWithin': {
+                '$centerSphere': [
+                    [
+                        center.lng, center.lat
+                    ], distance / process.env.EARTH_CIRCUM_IN_KM
+                ]
+            }
+        }
+    };
+    const projection = {
+        '_id': 0,
+        'id': 1
+    };
+    return collection.find(filter, { projection: projection }
+    //     , (cmdErr, result) => {
+    //     assert.equal(null, cmdErr);
+    // }
+    );
 }
 
 /** The schema used for the collection's validation */
@@ -53,8 +79,16 @@ const schema = {
                     bsonType: 'string'
                 }
             }, coordinates: {
-                bsonType: 'object', minItems: 2, maxItems: 2, items: {
-                    bsonType: 'double'
+                bsonType: 'object', minItems: 2, maxItems: 2, properties: {
+                        lng: {
+                            bsonType: 'double',
+                            minimum: -180,
+                            maximum: 180
+                        }, lat: {
+                            bsonType: 'double',
+                            minimum: -90,
+                            maximum: 90
+                        },
                 }
             }, rating: {
                 bsonType: 'number'
@@ -105,6 +139,8 @@ const index = [[{
     weights: {
         name: 10, types: 5,
     }, name: 'WeightedSearchIndex'
+}], [{
+    coordinates: '2dsphere'
 }]]
 
 

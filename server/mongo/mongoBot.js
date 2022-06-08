@@ -47,6 +47,7 @@ class MongoBot {
         await this.db.collection('Users').createIndex(...Users.index[1]);
         await this.db.collection('POIs').createIndex(...POIs.index[0]);
         await this.db.collection('POIs').createIndex(...POIs.index[1]);
+        await this.db.collection('POIs').createIndex(...POIs.index[2]);
 
         await this.connectOff();
     };
