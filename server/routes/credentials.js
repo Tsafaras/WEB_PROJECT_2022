@@ -1,13 +1,12 @@
 const router = require('express').Router();
-const {login, signup, connectOn, connectOff} = require('../mongo/mongoBot');
-const {changeCred} = require("../mongo/Users");
+const {connectOn, connectOff} = require('../mongo/mongoBot');
+const {changeCred, login, signup} = require("../mongo/Users");
 
 router.route('/login').post(async (req, res) => {
     try {
         await connectOn();
-        let password = req.body.params.password;
-        // TODO remove params
-        let username = req.body.params.username;
+        let password = req.body.password;
+        let username = req.body.username;
         let match = await login(username, password) ? username : false ;
         await connectOff();
         return res.status(200).send({success: match });
@@ -19,14 +18,13 @@ router.route('/login').post(async (req, res) => {
 router.route('/signup').post(async (req, res) => {
     try {
         await connectOn();
-        let password = req.body.params.password;
-        // TODO remove params
-        let username = req.body.params.username;
-        let email = req.body.params.email;
-        let newUser = await signup(username, password, email);
+        const password = req.body.password;
+        const username = req.body.username;
+        const email = req.body.email;
+        const newUser = await signup(username, password, email);
         await connectOff();
         if (typeof newUser === "string") {
-            return res.status(200).send({success: false, duplicate: newUser.duplicate});
+            return res.status(200).send({success: false, duplicate: newUser});
         }
         return res.status(200).send({success: newUser});
     } catch (err) {

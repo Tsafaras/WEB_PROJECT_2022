@@ -1,7 +1,6 @@
 <template>
   <div class="min-h-full flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8">
-      <!--      TODO Turn form input into component -->
       <div>
         <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900" v-text="header"></h2>
         <p class="mt-2 text-center text-sm text-gray-600">
@@ -35,11 +34,7 @@
                    type="password"
                    @input="passwordCheck"/>
           </div>
-          <p v-for="error of v$.$errors" v-if="v$.$error" :key="error.$uid">
-            {{ error.$message }}
-          </p>
         </div>
-        <!--        TODO When a password is entered, show requirements-->
         <div>
           <RouterLink v-if="existing" to="/">
             <input :disabled="username === '' || password === ''"
@@ -63,7 +58,7 @@
 <script>
 import axios from "axios";
 import useVuelidate from '@vuelidate/core'
-import {email, helpers} from '@vuelidate/validators'
+import {email} from '@vuelidate/validators'
 import {hashIt, passwordCheck} from "../helpers";
 
 const original_header = "Sign in to your acount";
@@ -77,7 +72,7 @@ export default {
   },
   validations() {
     return {
-      email: helpers.withMessage("Not a valid email address", email)
+      email: {email}
     }
   },
   data() {
@@ -103,11 +98,10 @@ export default {
     async login() {
 
       await axios.post('api/cred/login', {
-        params: {
-          username: this.username,
-          password: this.password
-        }
+        username: this.username,
+        password: this.password
       }).then((response) => {
+        console.log(response.data);
         if (!response.data.success) {
           this.emitter.emit('show',
               {
@@ -126,18 +120,27 @@ export default {
           });
     },
     async signup() {
-      // const isFormCorrect = await this.v$.$validate()
-      // if (!isFormCorrect) {
-      //   console.log(this.v$);
-      //   return;
-      // } // TODO Check email validator on signup
+      const validEmail = await this.v$.$validate()
+      if (!validEmail) {
+        return this.emitter.emit('show',
+            {
+              header: "Email criteria!",
+              text: "This doesn't seem like a valid e-mail address."
+            });
+      }
+
+      if (!this.pass)
+        return this.emitter.emit('show',
+            {
+              header: "Password criteria!",
+              text:
+                  'Password must be at least 8 characters long and contain at least 1 number, 1 uppercase letter and 1 special character.',
+            });
 
       await axios.post('api/cred/signup', {
-        params: {
-          username: this.username,
-          password: hashIt(this.password),
-          email: this.email
-        }
+        username: this.username,
+        password: hashIt(this.password),
+        email: this.email
       }).then((response) => {
         if (!response.data.success)
           return this.emitter.emit('show',

@@ -10,7 +10,6 @@ const sha256 = require('js-sha256').sha256;
 const declareCase = async (username, date) => {
     username = sha256(username);
     date = new Date(date);
-    // date =
     const collection = getCollection(process.env.COLL_CASES);
     let exclude = excludeDays(date);
     const result = await collection.updateOne({
@@ -31,7 +30,7 @@ const declareCase = async (username, date) => {
 const generate = async (users, date_start, num_of_days) => {
     const collection = getCollection(process.env.COLL_CASES);
     // how many to create
-    let count = users.length >= 1 / process.env.CASES_PERCENTAGE ?
+    const count = users.length >= 1 / process.env.CASES_PERCENTAGE ?
         Math.round(users.length * process.env.CASES_PERCENTAGE) : 1;
 
     let bulkOpArray = [];

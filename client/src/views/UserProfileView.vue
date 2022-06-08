@@ -31,7 +31,7 @@ export default {
         usernameField: {placeholder: 'New username', type: 'text', label: 'Username', sublabel:
               sessionStorage.getItem('username'),
           newValue: ''},
-        email: {placeholder: 'New email', type: 'email', label: 'Email', sublabel: 'your old one', newValue: ''},
+        // email: {placeholder: 'New email', type: 'email', label: 'Email', sublabel: 'your old one', newValue: ''},
         password: {placeholder: 'New password', type: 'password', label: 'Password', sublabel: 'we don\'t even know it',
           newValue:
               ''}

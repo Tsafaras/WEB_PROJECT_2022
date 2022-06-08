@@ -1,10 +1,19 @@
 // functions and schema for collection 'Users'
-const {getCollection} = require("./helpers");
+const {getCollection, checkHash} = require("./helpers");
+const sha256 = require('js-sha256').sha256;
 
 /**
- * @param {Object} doc
+ * @param {string} username
+ * @param {string} password
+ * @param {string} email
  */
-const signup = async (doc) => {
+const signup = async (username, password, email) => {
+    const doc = {
+        username: username,
+        password: password,
+        email: email
+    };
+
     const collection = getCollection(process.env.COLL_USERS);
     if (await collection.findOne({username: doc.username})) return 'username';
 
@@ -18,15 +27,13 @@ const signup = async (doc) => {
  * Checks for an existing user's credentials.
  * Checks for admin if no username is provided, because of how calling function is setup.
  * @param {String} username
+ * @param {String} password
  * @returns {Promise<boolean>}
  */
-const login = async (username) => {
+const login = async (username, password) => {
     const collection = getCollection(process.env.COLL_USERS);
     const result = await collection.findOne({username: username});
-    if (result === null) return false;
-
-    return result.password;
-    // return checkHash(doc.password, result.password);
+    return !result ? false : checkHash(password, result.password);
 };
 
 /**
@@ -57,7 +64,7 @@ const generate = async (docs) => {
 }
 
 const changeCred = async (username, field, newValue) => {
-    const collection = getCollection(process.env.COLL_USERS);
+    let collection = getCollection(process.env.COLL_USERS);
     let doc = {};
     doc[field] = newValue;
     await collection.updateOne({username: username}, {$set: doc});

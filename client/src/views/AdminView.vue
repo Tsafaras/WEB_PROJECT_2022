@@ -51,7 +51,6 @@ export default {
     })
   },
   data() {
-    // TODO Date must be range (Array[2])
     return {
       file: '',
       pickedRange: null,
@@ -129,8 +128,6 @@ export default {
         date_start: this.getUTCMiliSec(this.pickedRange[0]),
         date_end: this.getUTCMiliSec(this.pickedRange[1]),
       }
-      console.log(this.pickedRange[0], this.pickedRange[1]);
-      console.log(params);
 
       await axios.post('api/admin/generate', params).then(() => {
         this.emitter.emit('show', {

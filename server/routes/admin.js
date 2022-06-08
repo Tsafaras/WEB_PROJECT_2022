@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const {purge, connectOff, connectOn, upload, generate} = require('../mongo/mongoBot');
 const multer = require('multer');
+const {add_POI} = require("../mongo/POIs");
 const uploadDest = multer({storage: multer.memoryStorage()});
 
 router.route('/data')
@@ -8,7 +9,7 @@ router.route('/data')
         try {
             const file = JSON.parse(req.file.buffer.toString('utf-8'));
             await connectOn();
-            await upload(file);
+            await add_POI(file);
             await connectOff();
             res.status(200).send({uploaded: true});
         } catch (err) {

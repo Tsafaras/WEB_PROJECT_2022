@@ -33,7 +33,8 @@ async function upsert_onePOI(collection, doc) {
     })
 }
 
-const searchPOI = (collection, query) => {
+const searchPOI = (query) => {
+    const collection = getCollection(process.env.COLL_POIS);
     return collection.find({$text: {$search: query}});
 }
 

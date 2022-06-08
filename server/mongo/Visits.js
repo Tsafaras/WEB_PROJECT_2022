@@ -38,11 +38,11 @@ const schema = {
             },
             username: {
                 bsonType: 'string'},
-            timestamp: {
+            date: {
                 bsonType: 'date'},
             estimation: {
                 bsonType: 'number'}
-        }, required: ['poi', 'username', 'timestamp']
+        }, required: ['poi', 'username', 'date']
     }
 };
 

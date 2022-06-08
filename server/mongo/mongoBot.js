@@ -61,10 +61,6 @@ class MongoBot {
         console.log('disconnected');
     };
 
-    upload = async (body) => {
-        await POIs.add_POI( body);
-    }
-
     /**
      * Drops a collection and calls its constructor again, to assert its validator schema.
      * Works only for the POIs collection, as it is the only use-case of a 'drop'.
@@ -101,24 +97,6 @@ class MongoBot {
         nameOnly: true
     }).hasNext();
 
-    /**
-     * @param {string} username
-     * @param {string} password
-     * @returns {Promise<boolean>}
-     */
-    login = async (username, password) => {
-        return checkHash(password, await Users.login(username));
-    };
-
-    signup = async (username, password, email) => {
-        const query = {
-            username: username,
-            password: password,
-            email: email
-        };
-        return await Users.signup(query);
-    }
-
     generate = async (num_of_users, date_start, date_end) => {
         let docs = [];
         let usersHashed = []
@@ -149,10 +127,6 @@ class MongoBot {
 const hashIt = (to_hash) => {
     let salt = bcrypt.genSaltSync(10);
     return bcrypt.hashSync(to_hash, salt);
-}
-
-const checkHash = (given, existing) => {
-    return bcrypt.compareSync(given, existing);
 }
 
 module.exports = new MongoBot();

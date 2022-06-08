@@ -1,5 +1,5 @@
-const subDays = require("date-fns/subDays");
-const addDays = require("date-fns/addDays");
+const {subDays, addDays, addMinutes} = require('date-fns');
+
 const getRandomIntInclusive = (max) => {
     return Math.floor(Math.random() * (max + 1));
 };
@@ -7,11 +7,11 @@ const getRandomIntInclusive = (max) => {
 const getRandomDayInRange = (date_start, num_of_days) => {
     let whichDay = getRandomIntInclusive(num_of_days);
     return new Date(date_start + whichDay * process.env.MILISEC_IN_A_DAY);
-}
+};
 
 const getCollection = (coll_name) => {
     return require('./mongoBot').getCollection(coll_name);
-}
+};
 
 /**
  * Calculates a date range period that covers `num_of_days` before and after `dateReference`
@@ -24,6 +24,14 @@ const excludeDays = (dateReference) => {
     let maxDay = addDays(dateReference, process.env.CASE_DAYS_EXLUDE);
 
     return {minDay: minDay, maxDay: maxDay};
+};
+
+const skipTime = (date, minutes = process.env.NIGHT_OUT_START) => {
+    return addMinutes(date, minutes);
 }
 
-module.exports = {getRandomIntInclusive, getRandomDayInRange, getCollection, excludeDays, };
+const checkHash = (given, existing) => {
+    return bcrypt.compareSync(given, existing);
+}
+
+module.exports = {getRandomIntInclusive, getRandomDayInRange, getCollection, excludeDays, skipTime, checkHash};
