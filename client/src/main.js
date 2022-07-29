@@ -9,7 +9,10 @@ import mitt from 'mitt';
 import PageContent from "./components/PageContent.vue";
 import Datepicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';
-import BarChart from './components/BarChart.vue'
+import BarChart from './components/BarChart.vue';
+import LineChart from './components/LineChart.vue';
+import TableFromData from "./components/TableFromData.vue";
+import GroupBarChart from "./components/GroupBarChart.vue";
 
 const app = createApp(App);
 
@@ -20,5 +23,8 @@ app.component('Popup', Popup)
     .component('PageContent', PageContent)
     .component('Datepicker', Datepicker)
     .component('BarChart', BarChart)
+    .component('LineChart', LineChart)
+    .component('TableFromData', TableFromData)
+    .component('GroupBarChart', GroupBarChart)
 
 app.use(router).mount("#app");
