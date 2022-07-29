@@ -102,7 +102,7 @@ export default {
     },
     async conf_purge() {
       this.accept = false;
-      await axios.delete('api/admin/data').then((response) => {
+      await axios.delete('api/admin/data').then((res) => {
         this.emitter.emit('show', {
           header: "Success? 🤷‍♂️",
           text: "All data was removed.",
@@ -129,11 +129,18 @@ export default {
         date_end: this.getUTCMiliSec(this.pickedRange[1]),
       }
 
-      await axios.post('api/admin/generate', params).then(() => {
-        this.emitter.emit('show', {
-          header: "Success!",
-          text: "Users, cases and visits were generated successfully!",
-        })
+      await axios.post('api/admin/generate', params).then((res) => {
+        let visits = typeof res.data.visits === 'object' ? 0 : res.data.visits;
+        let popup = {
+          header: 'All done!',
+          text: `Generated ${res.data.users} users, ${res.data.cases} cases and ${visits} visits.`
+        }
+
+        if (!visits)
+          popup.text +=
+              ' Looks like there are no POIs, so we couldn\'t generate visits. Upload some first and try again.'
+
+        this.emitter.emit('show', popup)
       })
     },
     /**
