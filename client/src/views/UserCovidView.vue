@@ -8,12 +8,13 @@
     </Container>
 
     <Container title="View your COVID history">
+      <TableFromData :data="covidHistory" :headers="['Date (UTC)']"/>
       <ActionButton text="Fetch data" @click="getCases"/>
-<!--      <TimelineChart />-->
     </Container>
 
     <Container title="COVID - Possible contacts">
-      <ActionButton text="Fetch data"/>
+      <TableFromData :data="contacts" :headers="['Date (UTC)', 'POI', 'Address']"/>
+      <ActionButton text="Fetch data" @click="getContacts"/>
     </Container>
   </PageContent>
 </template>
@@ -28,6 +29,9 @@ export default {
       firstCOVIDCase: new Date(import.meta.env.VITE_FIRST_COVID_CASE),
       pickedDate: null,
       today: new Date(),
+      covidHistory: null,
+      possibleContact: null,
+      contacts: null
     }
   },
   methods: {
@@ -40,7 +44,11 @@ export default {
 
       const params = {
         username: sessionStorage.getItem('username'),
-        date: new Date(Date.UTC(this.pickedDate.getFullYear(), this.pickedDate.getMonth(), this.pickedDate.getDate()))
+        date: new Date(
+            Date.UTC(this.pickedDate.getFullYear(),
+                this.pickedDate.getMonth(),
+                this.pickedDate.getDate())
+        )
       }
 
       await axios.post('api/user/covid', params).then((res) => {
@@ -64,7 +72,36 @@ export default {
           username: sessionStorage.getItem('username')
         }
       }).then((res) => {
-        console.log(res.data);
+        if (res.data.length === 0)
+          return this.emitter.emit('show', {
+            header: "No diagnoses found.",
+            text: "It appears that you haven't declared any COVID diagnoses."
+          })
+
+        this.covidHistory = res.data;
+      })
+    },
+    async getContacts() {
+      this.possibleContact = new Date();
+      const today = new Date(Date.UTC(
+          this.possibleContact.getFullYear(),
+          this.possibleContact.getMonth(),
+          this.possibleContact.getDate())
+      )
+      console.log(today);
+      await axios.get('api/user/contacts', {
+        params: {
+          username: sessionStorage.getItem('username'),
+          date: today
+        }
+      }).then((res) => {
+        if (res.data.length === 0)
+          return this.emitter.emit('show', {
+            header: "No contacts found.",
+            text: "It appears that you haven't had contact with a COVID-positive person in the past 7 days."
+          })
+
+        this.contacts = res.data;
       })
     }
   }
