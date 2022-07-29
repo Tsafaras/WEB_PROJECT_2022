@@ -1,79 +1,67 @@
 <template>
-  <Bar :chart-data="chartData"
-       :chart-options="chartOptions"
-       :css-classes="cssClasses"
-       :dataset-id-key="datasetIdKey"
-       :styles="styles"
-  />
+  <div>
+    <apexchart
+        :options="chartOptions"
+        :series="series"
+        type="bar"
+        width="500"
+    ></apexchart>
+  </div>
 </template>
 
 <script>
-import {Bar} from 'vue-chartjs'
-import {BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, Title, Tooltip,} from 'chart.js'
-
-ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale,)
+import VueApexCharts from "vue3-apexcharts";
 
 export default {
   name: 'BarChart',
-  components: {Bar},
+  components: {
+    apexchart: VueApexCharts
+  },
   props: {
-    datasetIdKey: {
-      type: String,
-      default: 'bar'
-    },
-    cssClasses: {
-      default: '',
-      type: String
-    },
-    styles: {
-      type: Object,
-      default: () => {
-      }
-    },
-    dataset: {
-      type: [Object],
-      default: [{},]
-    },
-    labels: {
-      type: [String],
-      default: ['Total',]
-    }
+    data: Array,
   },
   data() {
     return {
-      chartData: {
-        labels: this.labels,
-        datasets: this.dataset
-      },
       chartOptions: {
-        plugins: {
-          legend: {
-            position: 'bottom'
-          }
-        }, transitions: {
-          show: {
-            animations: {
-              x: {
-                from: 0
-              },
-              y: {
-                from: 0
-              }
-            }
+        xaxis: {
+          type: 'category',
+        },
+        yaxis: {
+          logarithmic: true,
+          logBase: 2,
+        },
+        colors:
+            ['rgba(45,212,191,0.8)', 'rgba(56,189,248,0.8)', 'rgba(168,85,247,0.8)'],
+        stroke: {
+          colors: ['transparent'],
+          width: 40,
+        },
+        dataLabels: {
+          position: 'top',
+          style: {
+            fontSize: '1rem',
+            colors: ['#ffffff']
           },
-          hide: {
-            animations: {
-              x: {
-                to: 0
-              },
-              y: {
-                to: 0
-              }
-            }
+          formatter: function(value, { seriesIndex, w }) {
+            return w.config.series[seriesIndex].data[0].y
           }
-        }
+        },
       },
-    }
+      series: [
+        {
+          name: this.data[0].x,
+          data: [this.data[0]]
+        },
+        {
+          name: this.data[1].x,
+          data: [this.data[1]],
+        },
+        {
+          name: this.data[2].x,
+          data: [this.data[2]],
+        }
+      ],
+    };
   }
 }
 </script>
