@@ -42,6 +42,7 @@ const login = async (username, password) => {
  * @returns {Promise<number>}
  */
 const generate = async (docs) => {
+    // TODO make sure usernames are skipped if already exist. Guarantee docs.length inserted documents.
     const collection = getCollection(process.env.COLL_USERS);
     let bulkOpArray = [];
 
@@ -68,6 +69,17 @@ const changeCred = async (username, field, newValue) => {
     let doc = {};
     doc[field] = newValue;
     await collection.updateOne({username: username}, {$set: doc});
+
+    if (field === 'username') {
+        const filter = {username: sha256(username)};
+        const update = {$set: {username: sha256(newValue)}};
+
+        collection = getCollection(process.env.COLL_CASES);
+        await collection.updateMany(filter, update)
+
+        collection = getCollection(process.env.COLL_VISITS);
+        await collection.updateMany(filter, update)
+    }
 }
 
 /** The schema used for the collection's validation */
