@@ -1,5 +1,6 @@
 const {subDays, addDays, addMinutes} = require('date-fns');
 const bcrypt = require("bcryptjs");
+const haversine = require('haversine-distance');
 
 const getRandomIntInclusive = (max) => {
     return Math.floor(Math.random() * (max + 1));
@@ -7,7 +8,7 @@ const getRandomIntInclusive = (max) => {
 
 const getRandomDayInRange = (date_start, num_of_days) => {
     let whichDay = getRandomIntInclusive(num_of_days);
-    return new Date(date_start + whichDay * process.env.MILISEC_IN_A_DAY);
+    return new Date(date_start + whichDay * parseInt(process.env.MILISEC_IN_A_DAY));
 };
 
 const getCollection = (coll_name) => {
@@ -21,14 +22,46 @@ const getCollection = (coll_name) => {
  * @returns {{minDay, maxDay}} The date range period in question.
  */
 const excludeDays = (dateReference) => {
-    let minDay = subDays(dateReference, process.env.CASE_DAYS_EXLUDE);
-    let maxDay = addDays(dateReference, process.env.CASE_DAYS_EXLUDE);
+    let minDay = subDays(dateReference, parseInt(process.env.CASE_DAYS_EXLUDE));
+    let maxDay = addDays(dateReference, parseInt(process.env.CASE_DAYS_EXLUDE));
 
     return {minDay: minDay, maxDay: maxDay};
 };
 
-const skipTime = (date, minutes = process.env.NIGHT_OUT_START) => {
+const nextDay = date => {
+    return skipTime(date, parseInt(process.env.MINS_IN_A_DAY));
+}
+
+const skipTime = (date, minutes = parseInt(process.env.NIGHT_OUT_START)) => {
     return addMinutes(date, minutes);
+}
+
+const rewindTime = (date, num_of_days) => {
+    return subDays(date, num_of_days);
+}
+
+const findNearPOI = (currentPOI, allPOIs, timestamp) => {
+    const maxDistance = getRandomIntInclusive(1000 + parseInt(process.env.MAX_DISTANCE));
+    let poolPOIs = allPOIs.filter(x => x !== currentPOI && haversine(x.coordinates, currentPOI.coordinates) < maxDistance);
+    const newPOI = poolPOIs[getRandomIntInclusive(poolPOIs.length - 1)];
+    if (!newPOI) return {
+        break: true
+    }
+    const distance = Math.ceil(haversine(newPOI.coordinates, currentPOI.coordinates));
+
+    const walkTime = Math.ceil(distance / parseInt(process.env.WALK_SPEED));
+    const stayTime = getRandomIntInclusive(parseInt(process.env.MIN_STAY_TIME) + parseInt(process.env.MAX_STAY_TIME));
+    timestamp = skipTime(timestamp, stayTime + walkTime);
+
+    return {
+        poi: newPOI, time: timestamp
+    }
+}
+
+const runAggregate = async (collection, agg) => {
+    const coll = getCollection(collection)
+    let aggCursor = coll.aggregate(agg);
+    return await aggCursor.toArray();
 }
 
 const checkHash = (given, existing) => {
@@ -46,5 +79,15 @@ const hashIt = (to_hash) => {
 }
 
 module.exports = {
-    getRandomIntInclusive, getRandomDayInRange, getCollection, excludeDays, skipTime, checkHash, hashIt
+    getRandomIntInclusive,
+    getRandomDayInRange,
+    getCollection,
+    excludeDays,
+    skipTime,
+    checkHash,
+    hashIt,
+    nextDay,
+    findNearPOI,
+    runAggregate,
+    rewindTime
 };

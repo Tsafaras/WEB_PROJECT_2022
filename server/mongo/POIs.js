@@ -48,7 +48,7 @@ const searchNear = (center, distance) => {
                 '$centerSphere': [
                     [
                         center.lng, center.lat
-                    ], distance / process.env.EARTH_CIRCUM_IN_KM
+                    ], distance / parseInt(process.env.EARTH_CIRCUM_IN_KM)
                 ]
             }
         }
@@ -58,9 +58,6 @@ const searchNear = (center, distance) => {
         'id': 1
     };
     return collection.find(filter, { projection: projection }
-    //     , (cmdErr, result) => {
-    //     assert.equal(null, cmdErr);
-    // }
     );
 }
 
