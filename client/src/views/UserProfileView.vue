@@ -1,18 +1,18 @@
 <template>
   <PageContent>
     <Container title="View your check-in history">
-
-      <ActionButton text="Fetch data"/>
+      <TableFromData :data="checkIns" v-if="checkIns" :headers="['Date (UTC)', 'POI', 'Address']"/>
+      <ActionButton text="Fetch data" @click="getVisits"/>
     </Container>
-    <Container title="Change your credentials" subtitle="Your old ones will be replaced">
-      <form class="items-center" >
-        <div v-for="item in changeCred" :key="item" class="">
-          <label class="whitespace-nowrap"> {{item.label}} </label>
+    <Container title="Change your credentials" subtitle="Previous values will be replaced and gone forever.">
+      <form class="" >
+        <div v-for="item in changeCred" :key="item">
+          <p class="text-left font-bold text-sm">{{item.label}}</p>
           <input :placeholder="item.placeholder" :type="item.type" v-model="item.newValue"
                  class="w-full block border border-gray-300 placeholder-gray-500 text-gray-900
              rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"/>
-          <p class="text-xs text-gray-500 text-right italic">{{item.sublabel}}</p>
-          <ActionButton text="Change" @click="change(item)"/>
+          <p class="text-xs text-gray-500 text-right italic">Current: {{item.sublabel}}</p>
+          <ActionButton text="Change" @click="change(item)" class="my-1.5"/>
         </div>
       </form>
     </Container>
@@ -35,7 +35,7 @@ export default {
         password: {placeholder: 'New password', type: 'password', label: 'Password', sublabel: 'we don\'t even know it',
           newValue:
               ''}
-      },
+      }, checkIns: null
     }
   },
   methods: {
@@ -65,6 +65,20 @@ export default {
           header: 'Field changed.',
           text: `Your ${field} has been changed successfully.`
         })
+      })
+
+      if (field === 'username') {
+        sessionStorage.setItem('username', item.newValue);
+        this.changeCred.usernameField.sublabel = item.newValue;
+      }
+    },
+    async getVisits() {
+      await axios.get('api/user/visit', {
+        params: {
+          username: sessionStorage.getItem('username')
+        }
+      }).then((res) => {
+        this.checkIns = res.data;
       })
     }
   }
