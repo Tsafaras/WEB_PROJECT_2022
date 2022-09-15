@@ -26,6 +26,7 @@ router.route('/data')
         await connectOn();
         const count = await getCount(req.query.filter.startDate, req.query.filter.endDate)
         await connectOff();
+        res.set('Cache-Control', 'private, max-age=604800');
         res.status(200).send(count);
     })
 
@@ -40,6 +41,7 @@ router.route('/categories').get(async (req, res) => {
     await connectOn();
     const result = await getCategories();
     await connectOff();
+    res.set('Cache-Control', 'private, max-age=604800');
     res.status(200).send(result);
 })
 
@@ -47,6 +49,7 @@ router.route('/data/range').get( async (req, res) => {
     await connectOn();
     const result = await dayByDay(req.query.dateStart, req.query.dateEnd);
     await connectOff();
+    res.set('Cache-Control', 'private, max-age=86400');
     res.status(200).send(result);
 })
 
@@ -54,6 +57,7 @@ router.route('/data/day').get( async (req, res) => {
     await connectOn();
     const result = await hourByHour(req.query.date);
     await connectOff();
+    res.set('Cache-Control', 'private, max-age=3600');
     res.status(200).send(result);
 })
 

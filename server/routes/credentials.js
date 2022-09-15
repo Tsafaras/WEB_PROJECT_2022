@@ -40,7 +40,7 @@ router.route('/signup').post(async (req, res) => {
 
 router.route('/change').post(async (req, res) => {
     await connectOn();
-    const result = await changeCred(req.body.username, req.body.field, req.body.value);
+    await changeCred(req.body.username, req.body.field, req.body.value);
     await connectOff();
     return res.status(200).send({result: true});
 })

@@ -1,6 +1,5 @@
 const express = require("express");
 const cors = require("cors");
-const searchResults = require('./routes/searchResults')
 
 require("dotenv").config();
 
@@ -15,7 +14,6 @@ app.use(cors());
 app.use(express.json());
 
 // routes
-app.use('/api/search', searchResults);
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/cred', require('./routes/credentials'));
 app.use('/api/user', require('./routes/user'));
