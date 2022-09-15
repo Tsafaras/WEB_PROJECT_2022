@@ -10,7 +10,7 @@
               grid justify-items-center"
                      for="file-upload">
                 <FolderAddIcon class="h-12 w12"/>
-                Select a file <!-- TODO Add drag and drop -->
+                Select a file
                 <input id="file-upload" ref="file" accept=".json" class="sr-only" type="file" @change="checkFile"/>
               </label>
             </div>

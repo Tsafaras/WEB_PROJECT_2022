@@ -88,7 +88,6 @@ export default {
           this.possibleContact.getMonth(),
           this.possibleContact.getDate())
       )
-      console.log(today);
       await axios.get('api/user/contacts', {
         params: {
           username: sessionStorage.getItem('username'),
