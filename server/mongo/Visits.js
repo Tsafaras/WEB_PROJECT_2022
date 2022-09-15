@@ -9,15 +9,24 @@ const {sha256} = require("js-sha256");
  * @param username {string}
  * @param date {Date}
  * @param poi {string}
+ * @param people {number | null}
  * @returns {Promise<*>}
  */
-const checkIn = async (username, date, poi) => {
+const checkIn = async (username, poi, date, people) => {
     username = sha256(username);
     date = new Date(date);
     const collection = getCollection(process.env.COLL_VISITS);
+
+    let query = {username: username, date: date, poi: poi}
+    if (people) query['visitors_est'] = people;
+
     const result = await collection.updateOne({
         username: username, date: date,
-    }, {$setOnInsert: {username: username, date: date, poi: poi}}, {upsert: true})
+    }, {
+        $setOnInsert: query
+    }, {
+        upsert: true
+    })
     return result.upsertedCount;
 };
 
@@ -32,10 +41,7 @@ const visitHistory = async (username) => {
         }
     }, {
         $lookup: {
-            from: process.env.COLL_POIS,
-            localField: 'poi',
-            foreignField: 'id',
-            as: 'result'
+            from: process.env.COLL_POIS, localField: 'poi', foreignField: 'id', as: 'result'
         }
     }, {
         $unwind: {
@@ -43,10 +49,7 @@ const visitHistory = async (username) => {
         }
     }, {
         $project: {
-            _id: 0,
-            poi: '$result.name',
-            date: 1,
-            address: '$result.address'
+            _id: 0, poi: '$result.name', date: 1, address: '$result.address'
         }
     }]
     return await runAggregate(process.env.COLL_VISITS, agg);
