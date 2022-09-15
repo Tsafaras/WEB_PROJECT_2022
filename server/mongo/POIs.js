@@ -1,4 +1,4 @@
-const {getCollection} = require("./helpers");
+const {getCollection, runAggregate} = require("./helpers");
 
 async function add_POI(docs) {
     const collection = getCollection(process.env.COLL_POIS);
@@ -35,30 +35,67 @@ async function upsert_onePOI(collection, doc) {
     })
 }
 
-const searchPOI = (query) => {
-    const collection = getCollection(process.env.COLL_POIS);
-    return collection.find({$text: {$search: query}});
-}
+const searchPOI = async (query, day, hour, bounds) => {
+    // In case the time of day is 22:00 or 23:00:
+    // const nextHour = (hour + 1) % 24;
+    // const nextNextHour = (nextHour + 1) % 24;
+    //
+    // const prevHour = hour === 0 ? 24 + (hour - 1) % 24 : (hour - 1) % 24;
+    // const prevPrevHour = prevHour === 0 ? 24 + (prevHour - 1) % 24 : (prevHour - 1) % 24;
 
-const searchNear = (center, distance) => {
-    const collection = getCollection(process.env.COLL_POIS);
-    const filter = {
-        'coordinates': {
-            '$geoWithin': {
-                '$centerSphere': [
-                    [
-                        center.lng, center.lat
-                    ], distance / parseInt(process.env.EARTH_CIRCUM_IN_KM)
-                ]
+    const agg = [{
+        $match: {
+            $text: {
+                $search: query
+            }, coordinates: {
+                $geoWithin: {
+                    $box: [bounds.bottom_left, bounds.upper_right]
+                }
+            },
+        }
+    }, {
+        $lookup: {
+            from: 'Visits', localField: 'id', foreignField: 'poi', as: 'result'
+        }
+    }, {
+        $project: {
+            _id: 0, address: 1, coordinates: 1, id: 1, name: 1, populartimes: {
+                $slice: [{
+                    $arrayElemAt: ['$populartimes.data', parseInt(day)]
+                }, parseInt(hour), 2]
+            }, visitors_avg: {
+                $avg: {
+                    $cond: {
+                        if: {
+                            $lte: [{
+                                $dateDiff: {
+                                    startDate: '$date', endDate: new Date(), unit: 'hour'
+                                }
+                            }, 2]
+                        }, then: '$result.visitors_est', else: null
+                    }
+                }
             }
         }
-    };
-    const projection = {
-        '_id': 0,
-        'id': 1
-    };
-    return collection.find(filter, { projection: projection }
-    );
+    }, {
+        $addFields: {
+            marker: {
+                $switch: {
+                    branches: [{
+                        case: {
+                            $gt: [{$arrayElemAt: ['$populartimes', 0]}, 65]
+                        }, then: 'red'
+                    }, {
+                        case: {
+                            $gt: [{$arrayElemAt: ['$populartimes', 0]}, 32]
+                        }, then: 'orange'
+                    }], default: 'green'
+                }
+            }
+        }
+    }];
+
+    return await runAggregate(process.env.COLL_POIS, agg);
 }
 
 /** The schema used for the collection's validation */
@@ -77,15 +114,11 @@ const schema = {
                 }
             }, coordinates: {
                 bsonType: 'object', minItems: 2, maxItems: 2, properties: {
-                        lng: {
-                            bsonType: 'double',
-                            minimum: -180,
-                            maximum: 180
-                        }, lat: {
-                            bsonType: 'double',
-                            minimum: -90,
-                            maximum: 90
-                        },
+                    lng: {
+                        bsonType: 'double', minimum: -180, maximum: 180
+                    }, lat: {
+                        bsonType: 'double', minimum: -90, maximum: 90
+                    },
                 }
             }, rating: {
                 bsonType: 'number'
@@ -141,4 +174,4 @@ const index = [[{
 }]]
 
 
-module.exports = {schema, index, add_POI};
+module.exports = {schema, index, add_POI, searchPOI};

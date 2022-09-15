@@ -42,7 +42,6 @@ const login = async (username, password) => {
  * @returns {Promise<number>}
  */
 const generate = async (docs) => {
-    // TODO make sure usernames are skipped if already exist. Guarantee docs.length inserted documents.
     const collection = getCollection(process.env.COLL_USERS);
     let bulkOpArray = [];
 
