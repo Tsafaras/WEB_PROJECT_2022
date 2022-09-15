@@ -45,9 +45,13 @@
                   {{ header }}
                 </DialogTitle>
                 <div class="mt-2">
-                  <p class="text-sm text-gray-500">
+                  <p class="text-sm text-gray-500 whitespace-pre-line">
                     {{ text }}
                   </p>
+                  <input v-if="checkingIn" id="checkIn" v-model="people"
+                         class="appearance-none mt-2 relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                         name="people" placeholder="Number of people"
+                         type="number" min="0" oninput="validity.valid||(value='');"/>
                 </div>
 
                 <div class="mt-4 flex justify-end gap-2">
@@ -84,6 +88,9 @@ export default {
       state: false,
       btn_txt: 'Got it, thanks.',
       secondary: false,
+      people: null,
+      checkingIn: false,
+      poiID: null,
     }
   },
   components: {
@@ -100,6 +107,8 @@ export default {
       this.text = evt.text;
       this.btn_txt = evt.btn_txt ? evt.btn_txt : this.btn_txt;
       this.secondary = evt.secondary;
+      this.checkingIn = evt.checkingIn;
+      this.poiID = evt.poiID;
     })
   },
   methods: {
@@ -108,6 +117,16 @@ export default {
     },
     confirm() {
       this.state = false;
+
+      if (this.checkingIn) {
+        this.emitter.emit('checkedIn', {
+          poiID: this.poiID,
+          people: this.people
+        });
+        this.people = null;
+        return;
+      }
+
       if (this.secondary)
         this.emitter.emit('accept', {accept: true});
     }
